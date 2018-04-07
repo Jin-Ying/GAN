@@ -4,6 +4,7 @@ from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import functional_ops
 from tensorflow.python.ops import linalg_ops
+from tensorflow.python.ops import nn_ops
 
 tfgan = tf.contrib.gan
 

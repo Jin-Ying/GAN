@@ -11,7 +11,9 @@ import numpy as np
 import criterior
 from network import generator_mlp_mnist, discriminator_mlp_mnist
 from visualization import visualize
+from utils import sample_z
 tfgan = tf.contrib.gan
+
 
 mb_size = 32
 X_dim = 784
@@ -64,7 +66,7 @@ for it in range(100000):
     for _ in range(d_iter):
         X_mb, _ = mnist.train.next_batch(mb_size)
 
-        _, D_loss_curr, _,X_curr = sess.run(
+        _, D_loss_curr, X_curr = sess.run(
             [D_solver, D_loss, X],
             feed_dict={X: X_mb, z: sample_z(mb_size, z_dim)}
         )
