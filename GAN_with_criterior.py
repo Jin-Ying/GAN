@@ -29,6 +29,7 @@ fid_txt = open("fid.txt", "w")
 wid_txt = open("wid.txt", "w")
 kl_txt = open("kl.txt", "w")
 js_txt = open("js.txt", "w")
+path = "out4"
 
 X = tf.placeholder(tf.float32, shape=[None, X_dim])
 
@@ -57,8 +58,8 @@ config.gpu_options.allow_growth = True
 sess = tf.Session(config = config)
 sess.run(tf.global_variables_initializer())
 
-if not os.path.exists('out/'):
-    os.makedirs('out/')
+if not os.path.exists('out4/'):
+    os.makedirs('out4/')
 
 i = 0
 
@@ -100,7 +101,7 @@ for it in range(100000):
         if it % 1000 == 0:
             samples = sess.run(G_sample, feed_dict={z: sample_z(16, z_dim)})
 
-            visualize(samples,i)
+            visualize(path, samples, i)
 
             i = i + 1
 
