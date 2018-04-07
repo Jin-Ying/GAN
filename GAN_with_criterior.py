@@ -3,11 +3,7 @@ import sys
 os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
 
 import tensorflow as tf
-from tensorflow.python.framework import dtypes
-from tensorflow.python.ops import math_ops
-from tensorflow.python.ops import array_ops
-from tensorflow.python.ops import functional_ops
-from tensorflow.python.ops import linalg_ops
+
 from keras.backend.tensorflow_backend import set_session
 
 
@@ -17,17 +13,23 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import criterior
 tfgan = tf.contrib.gan
 
 mb_size = 32
 X_dim = 784
 z_dim = 10
 h_dim = 128
+d_iter = 10
 
 mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
 
-fid_txt = open("fid.txt","w")
-wid_txt = open("wid.txt","w")
+MODEL_GRAPH_DEF = 'classify_mnist_graph_def.pb'
+
+fid_txt = open("fid.txt", "w")
+wid_txt = open("wid.txt", "w")
+kl_txt = open("kl.txt", "w")
+js_txt = open("js.txt", "w")
 
 def plot(samples):
     fig = plt.figure(figsize=(4, 4))
@@ -94,8 +96,10 @@ G_sample = generator(z)
 D_real = discriminator(X)
 D_fake = discriminator(G_sample)
 
-f_distance = mnist_frechet_distance(real_images = X,generated_images = G_sample, graph_def_filename = MODEL_GRAPH_DEF)
-w_distance = mnist_frechet_distance_new(real_images = X,generated_images = G_sample, graph_def_filename = MODEL_GRAPH_DEF)
+inc_score = criterior.mnist_score(images = G_sample, graph_def_filename= MODEL_GRAPH_DEF)
+inc_score_new = criterior.mnist_score_new(images= G_sample, graph_def_filename= MODEL_GRAPH_DEF)
+f_distance = criterior.mnist_frechet_distance(real_images = X,generated_images = G_sample, graph_def_filename = MODEL_GRAPH_DEF)
+w_distance = criterior.mnist_frechet_distance_new(real_images = X,generated_images = G_sample, graph_def_filename = MODEL_GRAPH_DEF)
 
 D_loss = tf.reduce_mean(D_real) - tf.reduce_mean(D_fake)
 G_loss = -tf.reduce_mean(D_fake)
@@ -119,7 +123,7 @@ if not os.path.exists('out/'):
 i = 0
 
 for it in range(100000):
-    for _ in range(10):
+    for _ in range(d_iter):
         X_mb, _ = mnist.train.next_batch(mb_size)
 
         _, D_loss_curr, _,X_curr = sess.run(
@@ -127,23 +131,31 @@ for it in range(100000):
             feed_dict={X: X_mb, z: sample_z(mb_size, z_dim)}
         )
 
-    _, G_loss_curr, G_sample_curr, f_distance_curr, w_distance_curr = sess.run(
-        [G_solver, G_loss, G_sample, f_distance, w_distance],
+    _, G_loss_curr, G_sample_curr, inc_score_curr, inc_score_new_curr, f_distance_curr, w_distance_curr = sess.run(
+        [G_solver, G_loss, G_sample, inc_score, inc_score_new, f_distance, w_distance],
         feed_dict={X: X_mb, z: sample_z(mb_size, z_dim)}
     )
 
     if it % 100 == 0:
         print('Iter: {}; D loss: {:.4}; G_loss: {:.4}'
               .format(it, D_loss_curr, G_loss_curr))
-        # print("---G_sample_curr---")
-        # print(G_sample_curr)
-        # print(G_sample_curr.shape)
+
         print("---f_distance_curr---")
         print(f_distance_curr)
         fid_txt.write(str(f_distance_curr) + "\n")
+
         print("---w_distance_curr---")
         print(w_distance_curr)
         wid_txt.write(str(w_distance_curr) + "\n")
+
+        print("---inc_score_curr---")
+        print(inc_score_curr)
+        kl_txt.write(str(inc_score_curr) + "\n")
+
+        print("---inc_score_new_curr---")
+        print(inc_score_new_curr)
+        js_txt.write(str(inc_score_new_curr) + "\n")
+
 
         if it % 1000 == 0:
             samples = sess.run(G_sample, feed_dict={z: sample_z(16, z_dim)})
@@ -156,4 +168,5 @@ for it in range(100000):
 
 fid_txt.close()
 wid_txt.close()
-
+kl_txt.close()
+js_txt.close()
