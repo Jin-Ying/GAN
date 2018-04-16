@@ -22,6 +22,8 @@ from utils import check_folder
 import tensorflow as tf
 import argparse
 import random
+import time
+
 """parsing and configuration"""
 def parse_args():
     desc = "Tensorflow implementation of GAN collections"
@@ -128,9 +130,9 @@ def grid_search(lr_list, disc_iter_list, criterior):
                 best_criterior, best_learning_rate, best_disc_iter = criterior_result_curr, learning_rate_result_curr, disc_iter_result_curr
             else:
                 if (criterior <= 1):
-	            if (criterior_result_curr > best_criterior):
+                    if (criterior_result_curr > best_criterior):
                         best_criterior, best_learning_rate, best_disc_iter = criterior_result_curr, learning_rate_result_curr, disc_iter_result_curr
-		else:
+                else:
                     if (criterior_result_curr < best_criterior):
                         best_criterior, best_learning_rate, best_disc_iter = criterior_result_curr, learning_rate_result_curr, disc_iter_result_curr
     
@@ -152,13 +154,16 @@ def random_search(lr_list, disc_iter_list, criterior, try_times):
             if (criterior <= 1):
                 if (criterior_result_curr > best_criterior):
                     best_criterior, best_learning_rate, best_disc_iter = criterior_result_curr, learning_rate_result_curr, disc_iter_result_curr
-	    else:
+            else:
                 if (criterior_result_curr < best_criterior):
                     best_criterior, best_learning_rate, best_disc_iter = criterior_result_curr, learning_rate_result_curr, disc_iter_result_curr
     return best_criterior, best_learning_rate, best_disc_iter
 
 if __name__ == '__main__':
-    best_cri, best_lr, best_d_it = random_search([0.0002, 0.002, 0.02, 0.2], [1, 2], 2, 2)
+    start_time = time.time()
+    best_cri, best_lr, best_d_it = grid_search([0.0002, 0.002, 0.02, 0.2], [1, 2], 2)
     print("criterior = %0.6f" % best_cri)
     print("best learning rate = %0.6f" % best_lr)
     print("best discriminator iteration time = %0.6f" % best_d_it)
+    time_duration = time.time() - start_time
+    print("total time = %0.2f" % time_duration)

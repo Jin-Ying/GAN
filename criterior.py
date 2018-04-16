@@ -8,6 +8,12 @@ from tensorflow.python.ops import nn_ops
 
 tfgan = tf.contrib.gan
 
+#############################
+# 0: Inception Score with KL divergence
+# 1: Inception Score with JS divergence
+# 2: Frechet Index Distance
+# 3: Wasserstein Distance
+#############################
 
 MODEL_GRAPH_DEF = 'classify_mnist_graph_def.pb'
 INPUT_TENSOR = 'inputs:0'
