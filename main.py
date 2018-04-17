@@ -139,6 +139,8 @@ def grid_search(lr_list, disc_iter_list, criterior):
     return best_criterior, best_learning_rate, best_disc_iter
 
 def random_search(lr_list, disc_iter_list, criterior, try_times):
+    record_txt = open("random_search.txt","w")
+
     lr_list_len = len(lr_list)
     disc_iter_list_len = len(disc_iter_list)
     
@@ -147,6 +149,7 @@ def random_search(lr_list, disc_iter_list, criterior, try_times):
         j = random.randint(0, disc_iter_list_len - 1)
 
         criterior_result_curr, learning_rate_result_curr, disc_iter_result_curr = run_one_model(lr_list[i], disc_iter_list[j], criterior)
+        record_txt.write(str(learning_rate_result_curr) + " " + str(disc_iter_result_curr) + '\n')
 
         if (try_time == 0):
             best_criterior, best_learning_rate, best_disc_iter = criterior_result_curr, learning_rate_result_curr, disc_iter_result_curr
@@ -157,7 +160,49 @@ def random_search(lr_list, disc_iter_list, criterior, try_times):
             else:
                 if (criterior_result_curr < best_criterior):
                     best_criterior, best_learning_rate, best_disc_iter = criterior_result_curr, learning_rate_result_curr, disc_iter_result_curr
+
+
     return best_criterior, best_learning_rate, best_disc_iter
+
+def exploit_explore_search(lr_list, disc_iter_list, criterior, try_times):
+    record_txt = open("exploit_explore.txt","w")
+    lr_list_len = len(lr_list)
+    disc_iter_list_len = len(disc_iter_list)
+
+    try_time =0
+
+    while (try_time < try_times):
+        i = random.randint(0, lr_list_len - 1)
+        j = random.randint(0, disc_iter_list_len - 1)
+
+        criterior_result_curr, learning_rate_result_curr, disc_iter_result_curr = run_one_model(lr_list[i], disc_iter_list[j], criterior)
+        record_txt.write(str(learning_rate_result_curr) + " " + str(disc_iter_result_curr) + '\n')
+
+        if (try_time == 0):
+            best_criterior, best_learning_rate, best_disc_iter = criterior_result_curr, learning_rate_result_curr, disc_iter_result_curr
+        else:
+            if (criterior <= 1):
+                if (criterior_result_curr > best_criterior):
+                    best_criterior, best_learning_rate, best_disc_iter = criterior_result_curr, learning_rate_result_curr, disc_iter_result_curr
+                    lr_list.append(best_learning_rate * 0.8)
+                    lr_list.append(best_learning_rate * 1.2)
+                    disc_iter_list.append(best_disc_iter + 1)
+                    disc_iter_list.append(best_disc_iter - 1)
+                    lr_list_len = len(lr_list)
+                    disc_iter_list_len = len(disc_iter_list)
+            else:
+                if (criterior_result_curr < best_criterior):
+                    best_criterior, best_learning_rate, best_disc_iter = criterior_result_curr, learning_rate_result_curr, disc_iter_result_curr
+                    lr_list.append(best_learning_rate * 0.8)
+                    lr_list.append(best_learning_rate * 1.2)
+                    disc_iter_list.append(best_disc_iter + 1)
+                    disc_iter_list.append(max(best_disc_iter - 1, 0))
+                    lr_list_len = len(lr_list)
+                    disc_iter_list_len = len(disc_iter_list)
+        try_time = try_time + 1
+
+    return best_criterior, best_learning_rate, best_disc_iter
+
 
 if __name__ == '__main__':
     start_time = time.time()
