@@ -4,21 +4,25 @@ import os
 import time
 import tensorflow as tf
 import numpy as np
+import criterior
 
 from ops import *
 from utils import *
 
+MODEL_GRAPH_DEF = 'classify_mnist_graph_def.pb'
+
 class BEGAN(object):
     model_name = "BEGAN"     # name for checkpoint
 
-    def __init__(self, sess, epoch, batch_size, z_dim, dataset_name, checkpoint_dir, result_dir, log_dir):
+    def __init__(self, sess, epoch, batch_size, z_dim, dataset_name, checkpoint_dir, result_dir, log_dir, learning_rate, gamma, criterior):
         self.sess = sess
         self.dataset_name = dataset_name
-        self.checkpoint_dir = checkpoint_dir
-        self.result_dir = result_dir
-        self.log_dir = log_dir
+        self.checkpoint_dir = checkpoint_dir + "lr = " + str(learning_rate) + "-gamma = " + str(gamma) + "-criterior = " + str(criterior)
+        self.result_dir = result_dir + "lr = " + str(learning_rate) + "-gamma = " + str(gamma) + "-criterior = " + str(criterior)
+        self.log_dir = log_dir + "lr = " + str(learning_rate) + "-gamma = " + str(gamma) + "-criterior = " + str(criterior)
         self.epoch = epoch
         self.batch_size = batch_size
+        self.criterior = criterior
 
         if dataset_name == 'mnist' or dataset_name == 'fashion-mnist':
             # parameters
@@ -31,11 +35,11 @@ class BEGAN(object):
             self.c_dim = 1
 
             # BEGAN Parameter
-            self.gamma = 0.75
+            self.gamma = gamma
             self.lamda = 0.001
 
             # train
-            self.learning_rate = 0.0002
+            self.learning_rate = learning_rate
             self.beta1 = 0.5
 
             # test
@@ -234,8 +238,28 @@ class BEGAN(object):
 
         samples = self.sess.run(self.fake_images, feed_dict={self.z: z_sample})
 
-        save_images(samples[:image_frame_dim * image_frame_dim, :, :, :], [image_frame_dim, image_frame_dim],
-                    check_folder(self.result_dir + '/' + self.model_dir) + '/' + self.model_name + '_epoch%03d' % epoch + '_test_all_classes.png')
+        inc_score = criterior.mnist_score(images = samples, graph_def_filename= MODEL_GRAPH_DEF)
+        inc_score_new = criterior.mnist_score_new(images= samples, graph_def_filename= MODEL_GRAPH_DEF)
+        f_distance = criterior.mnist_frechet_distance(real_images = tf.cast(self.inputs, tf.float32),generated_images = samples, graph_def_filename = MODEL_GRAPH_DEF)
+        w_distance = criterior.mnist_frechet_distance_new(real_images = tf.cast(self.inputs, tf.float32) ,generated_images = samples, graph_def_filename = MODEL_GRAPH_DEF)
+
+        inc_score_curr, inc_score_new_curr, f_distance_curr, w_distance_curr = self.sess.run([inc_score, inc_score_new, f_distance, w_distance],
+                           feed_dict={self.z:z_sample, self.inputs: self.data_X[0: self.batch_size]})
+
+        # save_images(samples[:image_frame_dim * image_frame_dim, :, :, :], [image_frame_dim, image_frame_dim],
+                    # check_folder(self.result_dir + '/' + self.model_dir) + '/' + self.model_name + '_epoch%03d' % epoch + '_test_all_classes.png')
+        if (self.criterior == 0):
+        # Inception Score(KL Divergence)
+            return inc_score_curr
+        if (self.criterior == 1):
+        # Inception Score(JS Divergence)
+            return inc_score_new_curr
+        if (self.criterior == 2):
+        # Frechet Index Distance
+            return f_distance_curr
+        if (self.criterior == 3):
+        # Wasserstain Distance
+            return w_distance_curr
 
     @property
     def model_dir(self):

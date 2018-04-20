@@ -17,9 +17,9 @@ class GAN(object):
     def __init__(self, sess, epoch, batch_size, z_dim, dataset_name, checkpoint_dir, result_dir, log_dir, learning_rate, disc_iter, criterior):
         self.sess = sess
         self.dataset_name = dataset_name
-        self.checkpoint_dir = checkpoint_dir + "lr = " + str(learning_rate) + "disc_iter = " + str(disc_iter) + "criterior = " + str(criterior)
-        self.result_dir = result_dir + "lr = " + str(learning_rate) + "disc_iter = " + str(disc_iter) + "criterior = " + str(criterior)
-        self.log_dir = log_dir + "lr = " + str(learning_rate) + "disc_iter = " + str(disc_iter) + "criterior = " + str(criterior)
+        self.checkpoint_dir = checkpoint_dir + "lr = " + str(learning_rate) + "-disc_iter = " + str(disc_iter) + "-criterior = " + str(criterior)
+        self.result_dir = result_dir + "lr = " + str(learning_rate) + "-disc_iter = " + str(disc_iter) + "-criterior = " + str(criterior)
+        self.log_dir = log_dir + "lr = " + str(learning_rate) + "-disc_iter = " + str(disc_iter) + "-criterior = " + str(criterior)
         self.epoch = epoch
         self.batch_size = batch_size
         self.learning_rate = learning_rate
@@ -234,16 +234,16 @@ class GAN(object):
                      feed_dict={self.z:z_sample, self.inputs: self.data_X[0: self.batch_size]})
 
         if (self.criterior == 0):
-	# Inception Score(KL Divergence)
+        # Inception Score(KL Divergence)
             return inc_score_curr
         if (self.criterior == 1):
-	# Inception Score(JS Divergence)
+        # Inception Score(JS Divergence)
             return inc_score_new_curr
         if (self.criterior == 2):
-	# Frechet Index Distance
+        # Frechet Index Distance
             return f_distance_curr
         if (self.criterior == 3):
-	# Wasserstain Distance
+        # Wasserstain Distance
             return w_distance_curr
 
     @property
